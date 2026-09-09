@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDoS — sekilas ancaman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#10151C;
+    --panel:#161C25;
+    --panel-alt:#131822;
+    --grid:#212B37;
+    --line:#2B3644;
+    --text:#E8EDF2;
+    --text-soft:#8695A7;
+    --teal:#3FA7A0;
+    --teal-bg:#17272A;
+    --red:#E2574C;
+    --red-bg:#2A1B1B;
+    --amber:#D9A441;
+    --amber-bg:#2A2216;
+    --max:1000px;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'IBM Plex Sans', Arial, sans-serif;
+    line-height:1.6;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:34px 34px;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--red); color:#fff; }
+  a{ color:inherit; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  nav.top{
+    position:sticky; top:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 40px;
+    background:rgba(16,21,28,0.9);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px;
+  }
+  nav.top .brand{ display:flex; align-items:center; gap:8px; color:var(--text); }
+  nav.top .brand .pip{ width:7px; height:7px; border-radius:50%; background:var(--teal); box-shadow:0 0 8px var(--teal); }
+  nav.top .links{ display:flex; gap:22px; overflow-x:auto; }
+  nav.top .links a{ text-decoration:none; color:var(--text-soft); border-bottom:1px solid transparent; padding-bottom:2px; white-space:nowrap; }
+  nav.top .links a:hover, nav.top .links a:focus-visible{ color:var(--red); border-bottom-color:var(--red); }
+  @media (max-width:780px){ nav.top{ padding:14px 18px; } nav.top .links{ gap:14px; } }
+
+  .frame{
+    position:relative;
+    border:1px solid var(--line);
+    background:var(--panel);
+    padding:32px;
+  }
+  .corner{ position:absolute; width:10px; height:10px; border-color:var(--red); }
+  .corner.tl{ top:-1px; left:-1px; border-top:2px solid; border-left:2px solid; }
+  .corner.tr{ top:-1px; right:-1px; border-top:2px solid; border-right:2px solid; }
+  .corner.bl{ bottom:-1px; left:-1px; border-bottom:2px solid; border-left:2px solid; }
+  .corner.br{ bottom:-1px; right:-1px; border-bottom:2px solid; border-right:2px solid; }
+
+  .page{ padding:88px 40px; max-width:calc(var(--max) + 80px); margin:0 auto; }
+  .page.alt{ background:var(--panel-alt); max-width:none; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .page.alt > .inner{ max-width:var(--max); margin:0 auto; }
+  @media (max-width:780px){ .page{ padding:56px 18px; } }
+
+  .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--red); margin:0 0 12px 0; letter-spacing:0.02em; }
+  h1,h2,h3{ margin:0; color:var(--text); font-weight:600; }
+  h1{ font-family:'IBM Plex Mono', monospace; font-size:clamp(46px, 9vw, 84px); line-height:0.98; letter-spacing:-0.01em; }
+  h2{ font-size:clamp(26px, 4vw, 34px); line-height:1.2; margin-bottom:22px; max-width:20ch; }
+  p{ max-width:64ch; color:var(--text); }
+  .lede{ font-size:18px; color:var(--text-soft); max-width:54ch; }
+
+  .hero{ padding-top:60px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:40px; align-items:center; }
+  @media (max-width:900px){ .hero{ grid-template-columns:1fr; } }
+  .acro{ display:flex; gap:0; margin-top:34px; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .acro div{ flex:1 1 140px; padding:16px 18px 0 0; border-right:1px solid var(--line); }
+  .acro div:last-child{ border-right:none; }
+  .acro .w{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--red); }
+  .acro .d{ font-size:13.5px; color:var(--text-soft); margin-top:4px; }
+
+  .heroviz{ display:flex; justify-content:center; }
+  .heroviz svg{ width:100%; max-width:420px; height:auto; }
+
+  .def-grid{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:48px; align-items:start; }
+  @media (max-width:820px){ .def-grid{ grid-template-columns:1fr; gap:28px; } }
+  .term{
+    position:relative; padding:22px; background:var(--panel-alt); border:1px solid var(--line);
+  }
+  .term .head{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-soft); margin-bottom:14px; display:flex; justify-content:space-between; }
+  .term p{ font-family:'IBM Plex Mono', monospace; font-size:14.5px; color:var(--teal); line-height:1.7; max-width:none; }
+
+  .purpose-list{ list-style:none; margin:0; padding:0; }
+  .purpose-list li{
+    display:grid; grid-template-columns:26px 1fr; gap:18px;
+    padding:22px 0; border-top:1px solid var(--line);
+  }
+  .purpose-list li:last-child{ border-bottom:1px solid var(--line); }
+  .purpose-list .mark{ width:18px; height:18px; border:1.5px solid var(--red); transform:rotate(45deg); margin-top:4px; }
+  .purpose-list h3{ font-size:16.5px; margin-bottom:4px; }
+  .purpose-list p{ color:var(--text-soft); margin:0; }
+
+  .demo-note{ margin-bottom:28px; }
+  .sim{ border:1px solid var(--line); background:var(--panel-alt); }
+  .sim-canvas-wrap{ position:relative; border-bottom:1px solid var(--line); }
+  canvas#simCanvas{ display:block; width:100%; height:320px; }
+  .sim-legend{
+    position:absolute; top:14px; left:14px; display:flex; gap:16px;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-soft);
+  }
+  .sim-legend span{ display:flex; align-items:center; gap:6px; }
+  .sim-legend i{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .sim-legend .l1{ background:var(--teal); }
+  .sim-legend .l2{ background:var(--red); }
+
+  .sim-controls{ padding:22px 24px; display:grid; gap:18px; }
+  .ctrl-row{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .ctrl-row label{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--text-soft); width:170px; flex:0 0 auto; }
+  input[type=range]{ flex:1 1 200px; accent-color:var(--red); }
+  .toggle{ display:flex; align-items:center; gap:10px; cursor:pointer; font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--text-soft); }
+  .toggle input{ accent-color:var(--teal); width:16px; height:16px; }
+
+  .readouts{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:1px; background:var(--line); border-top:1px solid var(--line); }
+  .readout{ background:var(--panel); padding:16px 18px; }
+  .readout .k{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-soft); }
+  .readout .v{ font-family:'IBM Plex Mono', monospace; font-size:22px; margin-top:6px; }
+  .readout .v.ok{ color:var(--teal); }
+  .readout .v.warn{ color:var(--amber); }
+  .readout .v.bad{ color:var(--red); }
+
+  .loadbar{ height:8px; background:var(--grid); position:relative; overflow:hidden; margin-top:8px; }
+  .loadbar .fill{ position:absolute; left:0; top:0; bottom:0; width:0%; background:var(--teal); transition:width 0.15s linear, background 0.3s ease; }
+  .loadbar .mark100{ position:absolute; left:40%; top:0; bottom:0; width:1px; background:var(--text-soft); }
+
+  .example-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
+  .example{ background:var(--panel-alt); padding:26px 22px; display:flex; flex-direction:column; gap:10px; }
+  .example .tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--red); }
+  .example h3{ font-size:16.5px; }
+  .example p{ margin:0; color:var(--text-soft); font-size:14px; }
+  .example .stat{ font-family:'IBM Plex Mono', monospace; font-size:24px; color:var(--text); margin-top:6px; }
+  .example .stat span{ font-size:12px; color:var(--text-soft); margin-left:6px; }
+
+  table.forms{ width:100%; border-collapse:collapse; font-size:14.5px; }
+  table.forms th, table.forms td{ text-align:left; padding:14px 16px; border-top:1px solid var(--line); vertical-align:top; }
+  table.forms thead th{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-soft); font-weight:500; border-top:none; border-bottom:1px solid var(--text-soft); }
+  table.forms tbody th{ font-weight:600; white-space:nowrap; color:var(--red); }
+  table.forms td{ color:var(--text-soft); }
+  .table-wrap{ overflow-x:auto; }
+
+  .mitigation{ margin-top:32px; padding:22px 24px; border:1px solid var(--line); background:var(--panel-alt); }
+  .mitigation .head{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--teal); margin-bottom:10px; }
+  .mitigation ul{ margin:0; padding-left:18px; color:var(--text-soft); font-size:14.5px; }
+  .mitigation li{ margin-bottom:6px; }
+
+  footer{ padding:44px 40px 64px; max-width:var(--max); margin:0 auto; border-top:1px solid var(--line); }
+  footer p{ font-size:13.5px; color:var(--text-soft); }
+  @media (max-width:780px){ footer{ padding:36px 18px 52px; } }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <span class="brand"><span class="pip"></span>DDoS — sekilas ancaman</span>
+  <div class="links">
+    <a href="#definisi">Definisi</a>
+    <a href="#tujuan">Tujuan</a>
+    <a href="#cara-kerja">Cara kerja</a>
+    <a href="#contoh">Contoh</a>
+    <a href="#jenis">Jenis</a>
+  </div>
+</nav>
+
+<section class="page hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Sekilas ancaman · Keamanan jaringan</p>
+    <h1>DDoS</h1>
+    <p class="lede">Apa yang terjadi saat ribuan komputer meminta sesuatu dari sebuah server, pada detik yang sama, dengan sengaja.</p>
+    <div class="acro">
+      <div><div class="w">Distributed</div><div class="d">banjir permintaan datang dari banyak mesin sekaligus</div></div>
+      <div><div class="w">Denial</div><div class="d">pengunjung sungguhan jadi tidak bisa masuk</div></div>
+      <div><div class="w">of Service</div><div class="d">target tetap menyala, tapi berhenti merespons</div></div>
+    </div>
+  </div>
+  <div class="heroviz" aria-hidden="true">
+    <svg id="heroSvg" viewBox="0 0 400 340" xmlns="http://www.w3.org/2000/svg">
+      <rect x="170" y="140" width="60" height="80" rx="2" fill="none" stroke="#E8EDF2" stroke-width="1.4"/>
+      <rect x="180" y="150" width="40" height="8" fill="none" stroke="#8695A7" stroke-width="1"/>
+      <rect x="180" y="163" width="40" height="8" fill="none" stroke="#8695A7" stroke-width="1"/>
+      <circle cx="200" cy="180" r="10" fill="none" stroke="#E2574C" stroke-width="1.5" id="serverPulse"/>
+      <g id="nodes" stroke="#3FA7A0" stroke-width="1.3" fill="none"></g>
+      <g id="botNodes" stroke="#E2574C" stroke-width="1.3" fill="none"></g>
+    </svg>
+  </div>
+</section>
+
+<section class="page" id="definisi">
+  <p class="eyebrow">Definisi</p>
+  <div class="def-grid">
+    <div>
+      <h2>Apa itu DDoS</h2>
+      <p>Serangan DDoS (distributed denial-of-service) membanjiri sebuah server, layanan, atau jaringan dengan trafik yang jauh melebihi kemampuannya — bukan untuk mencuri apa pun, melainkan agar terlalu sibuk untuk melayani orang lain.</p>
+      <p>Kata "distributed" (terdistribusi) itulah yang membuatnya sulit dihentikan: banjir trafik datang dari banyak mesin berbeda sekaligus — sering kali komputer, router, atau kamera biasa yang terinfeksi tanpa sepengetahuan pemiliknya. Memblokir satu sumber saja tidak akan berpengaruh, karena ribuan sumber lain masih terus mengirim.</p>
+    </div>
+    <div class="term">
+      <div class="head"><span>definisi.log</span><span>hanya-baca</span></div>
+      <p>"Terlalu banyak pintu, semuanya diketuk sekaligus — sampai tidak ada yang bisa masuk, termasuk mereka yang seharusnya boleh masuk."</p>
+    </div>
+  </div>
+</section>
+
+<section class="page alt" id="tujuan">
+  <div class="inner">
+    <p class="eyebrow">Tujuan</p>
+    <h2>Mengapa penyerang melakukannya</h2>
+    <ul class="purpose-list">
+      <li>
+        <span class="mark"></span>
+        <div><h3>Pemerasan</h3><p>Mengancam akan membuat layanan tetap offline — atau membuatnya offline sebagai bukti kemampuan — sampai tebusan dibayarkan.</p></div>
+      </li>
+      <li>
+        <span class="mark"></span>
+        <div><h3>Sabotase persaingan usaha</h3><p>Melumpuhkan layanan pesaing pada momen krusial: saat diskon besar, peluncuran produk, pertandingan, atau jadwal ujian.</p></div>
+      </li>
+      <li>
+        <span class="mark"></span>
+        <div><h3>Protes dan hacktivism</h3><p>Mengganggu situs sebuah organisasi sebagai bentuk protes politik atau ideologis yang terlihat jelas.</p></div>
+      </li>
+      <li>
+        <span class="mark"></span>
+        <div><h3>Pengalih perhatian</h3><p>Mengalihkan perhatian tim keamanan dengan banjir trafik yang mencolok, sementara serangan lain yang lebih senyap berlangsung di tempat lain.</p></div>
+      </li>
+      <li>
+        <span class="mark"></span>
+        <div><h3>Unjuk kemampuan</h3><p>Sebagian serangan dilakukan sekadar untuk membuktikan sebuah botnet berfungsi, atau untuk gengsi di kalangan penyerang.</p></div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="page" id="cara-kerja">
+  <p class="eyebrow">Cara kerja</p>
+  <h2>Lihat cara kerjanya</h2>
+  <p class="demo-note">Sebuah server hanya sanggup menangani sejumlah permintaan per detik sebelum akhirnya kewalahan. Di bawah ini, pengunjung sah (warna teal) datang secara stabil ke sebuah server kecil. Coba naikkan trafik botnet dan lihat apa yang terjadi pada mereka — lalu aktifkan penyaringan trafik untuk melihat cara mitigasi bekerja.</p>
+
+  <div class="sim">
+    <div class="sim-canvas-wrap">
+      <canvas id="simCanvas"></canvas>
+      <div class="sim-legend">
+        <span><i class="l1"></i>Pengguna sah</span>
+        <span><i class="l2"></i>Permintaan botnet</span>
+      </div>
+    </div>
+    <div class="sim-controls">
+      <div class="ctrl-row">
+        <label for="botSlider">Trafik botnet</label>
+        <input type="range" id="botSlider" min="0" max="100" value="0">
+        <label class="toggle"><input type="checkbox" id="mitigationToggle">Penyaringan trafik (mitigasi)</label>
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="readout">
+        <div class="k">Beban server</div>
+        <div class="v" id="loadValue">0%</div>
+        <div class="loadbar"><div class="fill" id="loadFill"></div><div class="mark100"></div></div>
+      </div>
+      <div class="readout">
+        <div class="k">Permintaan sah terlayani/detik</div>
+        <div class="v ok" id="servedValue">0</div>
+      </div>
+      <div class="readout">
+        <div class="k">Permintaan gagal/detik</div>
+        <div class="v" id="droppedValue">0</div>
+      </div>
+      <div class="readout">
+        <div class="k">Status</div>
+        <div class="v ok" id="statusValue">Normal</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="page alt" id="contoh">
+  <div class="inner">
+    <p class="eyebrow">Contoh</p>
+    <h2>Insiden yang terkenal</h2>
+    <div class="example-grid">
+      <div class="example">
+        <span class="tag">Okt 2016 · Botnet Mirai</span>
+        <h3>Dyn</h3>
+        <p>Botnet yang terdiri dari router dan kamera yang dibajak membanjiri penyedia DNS Dyn, membuat Twitter, Netflix, Reddit, Spotify, dan situs lain lumpuh selama berjam-jam di AS.</p>
+      </div>
+      <div class="example">
+        <span class="tag">Feb 2018 · Amplifikasi memcached</span>
+        <h3>GitHub</h3>
+        <div class="stat">1,35<span>Tbps puncak</span></div>
+        <p>Server memcached yang salah konfigurasi dikelabui untuk menembakkan trafik yang telah diperbesar ke GitHub — serangan terbesar yang pernah tercatat saat itu, berhasil diredam dalam hitungan menit.</p>
+      </div>
+      <div class="example">
+        <span class="tag">Feb 2020 · Refleksi CLDAP</span>
+        <h3>AWS</h3>
+        <div class="stat">2,3<span>Tbps puncak</span></div>
+        <p>AWS Shield berhasil menyerap banjir trafik pemecah rekor yang ditujukan ke seorang pelanggan cloud, dibangun dengan menyalahgunakan sebuah protokol pencarian direktori yang jarang dikenal untuk amplifikasi.</p>
+      </div>
+      <div class="example">
+        <span class="tag">Berlangsung terus</span>
+        <h3>Platform game</h3>
+        <p>Server game menjadi target yang sering disasar — gangguan sesaat saja saat peluncuran atau turnamen bisa merusak momen tersebut bagi semua orang yang terhubung.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="jenis">
+  <p class="eyebrow">Jenis</p>
+  <h2>Ragam bentuk serangan</h2>
+  <p style="margin-bottom:26px;">Serangan biasanya dikelompokkan berdasarkan lapisan koneksi mana yang coba dilumpuhkan.</p>
+  <div class="table-wrap">
+    <table class="forms">
+      <thead>
+        <tr><th></th><th>Yang disasar</th><th>Cara kerja</th><th>Skala umum</th></tr>
+      </thead>
+      <tbody>
+        <tr><th>Volumetrik</th><td>Kapasitas bandwidth yang tersedia</td><td>Sekadar mendorong lebih banyak trafik mentah daripada yang sanggup ditampung koneksi, misalnya banjir UDP</td><td>Gigabit hingga terabit/detik</td></tr>
+        <tr><th>Protokol</th><td>Sumber daya server dan jaringan</td><td>Memanfaatkan proses jabat tangan koneksi agar sesi tertahan setengah terbuka sampai sumber daya habis, misalnya banjir SYN</td><td>Diukur dalam paket/detik</td></tr>
+        <tr><th>Lapisan aplikasi</th><td>Aplikasi atau situs itu sendiri</td><td>Mengirim permintaan yang tampak wajar (memuat halaman, pencarian) namun mahal untuk diproses server</td><td>Diukur dalam permintaan/detik</td></tr>
+        <tr><th>Amplifikasi</th><td>Target mana pun, lewat pihak ketiga</td><td>Mengirim permintaan kecil dengan alamat palsu ke server yang salah konfigurasi, yang lalu membalas dengan respons jauh lebih besar ke korban</td><td>Memperbesar trafik 10–70×</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mitigation">
+    <div class="head">Cara menghentikannya</div>
+    <ul>
+      <li>Pusat penyaringan trafik (scrubbing) menyaring paket berbahaya sebelum mencapai target</li>
+      <li>Pembatasan laju (rate limiting) membatasi jumlah permintaan dari satu sumber</li>
+      <li>CDN dan anycast menyebarkan trafik ke banyak lokasi, sehingga tidak ada satu titik yang kewalahan sendirian</li>
+      <li>Blackhole routing membuang seluruh trafik ke alamat yang diserang sebagai jalan terakhir</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p>Simulator di atas berjalan sepenuhnya di peramban Anda dengan angka trafik rekaan — tidak pernah mengirim permintaan jaringan sungguhan. Halaman ini dibuat untuk literasi keamanan secara umum, bukan panduan untuk melancarkan atau mempertahankan sistem tertentu.</p>
+</footer>
+
+<script>
+(function(){
+  /* ---------- ilustrasi hero ---------- */
+  function buildHero(){
+    const svg = document.getElementById('heroSvg');
+    const nodes = document.getElementById('nodes');
+    const botNodes = document.getElementById('botNodes');
+    const target = {x:200, y:180};
+    const legitPos = [{x:40,y:180},{x:60,y:110},{x:60,y:250}];
+    const botPos = [{x:340,y:60},{x:360,y:180},{x:340,y:300},{x:200,y:30},{x:200,y:330},{x:90,y:40}];
+
+    legitPos.forEach((p,i)=>{
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',p.x); line.setAttribute('y1',p.y);
+      line.setAttribute('x2',target.x); line.setAttribute('y2',target.y);
+      line.setAttribute('opacity','0.5');
+      nodes.appendChild(line);
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',p.x); c.setAttribute('cy',p.y); c.setAttribute('r','5');
+      nodes.appendChild(c);
+    });
+    botPos.forEach((p,i)=>{
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',p.x); line.setAttribute('y1',p.y);
+      line.setAttribute('x2',target.x); line.setAttribute('y2',target.y);
+      line.setAttribute('opacity','0.35');
+      botNodes.appendChild(line);
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',p.x); c.setAttribute('cy',p.y); c.setAttribute('r','4');
+      botNodes.appendChild(c);
+    });
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce){
+      const pulse = document.getElementById('serverPulse');
+      let r = 10, growing = true;
+      setInterval(()=>{
+        r += growing ? 0.25 : -0.25;
+        if (r > 13) growing = false;
+        if (r < 10) growing = true;
+        pulse.setAttribute('r', r.toFixed(2));
+      }, 40);
+    }
+  }
+  buildHero();
+
+  /* ---------- simulator banjir trafik ---------- */
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  const slider = document.getElementById('botSlider');
+  const mitigationToggle = document.getElementById('mitigationToggle');
+  const loadValue = document.getElementById('loadValue');
+  const loadFill = document.getElementById('loadFill');
+  const servedValue = document.getElementById('servedValue');
+  const droppedValue = document.getElementById('droppedValue');
+  const statusValue = document.getElementById('statusValue');
+
+  let W = 0, H = 0, target = {x:0,y:0};
+  const CAPACITY = 30; // permintaan/detik yang sanggup ditangani server
+
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    W = rect.width; H = rect.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    target = { x: W*0.84, y: H*0.5 };
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  let particles = [];
+  let legitAccum = 0, botAccum = 0;
+  let lastTime = performance.now();
+
+  let counters = { legitServed:0, legitDropped:0, botServed:0, botDropped:0 };
+  let displayLoad = 0;
+
+  function spawnLegit(){
+    particles.push({
+      x: 0, y: Math.random()*H, type:'legit',
+      speed: 90 + Math.random()*20, resolved:false
+    });
+  }
+  function spawnBot(){
+    const edge = Math.floor(Math.random()*3);
+    let x,y;
+    if (edge === 0){ x = Math.random()*W*0.7; y = 0; }
+    else if (edge === 1){ x = Math.random()*W*0.7; y = H; }
+    else { x = 0; y = Math.random()*H; }
+    particles.push({
+      x, y, type:'bot', speed: 100 + Math.random()*30,
+      resolved:false, scrubbed:false
+    });
+  }
+
+  function currentRates(){
+    const botRate = (parseFloat(slider.value)/100) * 70;
+    return { legitRate: 8, botRate };
+  }
+
+  function step(dt){
+    const { legitRate, botRate } = currentRates();
+    const mitigationOn = mitigationToggle.checked;
+
+    legitAccum += dt*legitRate;
+    while (legitAccum >= 1){ spawnLegit(); legitAccum -= 1; }
+    botAccum += dt*botRate;
+    while (botAccum >= 1){ spawnBot(); botAccum -= 1; }
+
+    const ringRadius = 95;
+    const serverRadius = 22;
+    const effectiveBotRate = mitigationOn ? botRate*0.12 : botRate;
+    const totalLoad = legitRate + effectiveBotRate;
+    const passFraction = Math.min(1, CAPACITY/totalLoad);
+
+    for (const p of particles){
+      if (p.resolved) continue;
+      const dx = target.x - p.x, dy = target.y - p.y;
+      const dist = Math.hypot(dx,dy) || 1;
+      const moveDist = p.speed*dt;
+      p.x += (dx/dist)*moveDist;
+      p.y += (dy/dist)*moveDist;
+
+      if (p.type === 'bot' && mitigationOn && !p.scrubbed && dist <= ringRadius){
+        p.scrubbed = true;
+        if (Math.random() < 0.88){
+          p.resolved = true; p.outcome = 'dropped'; p.age = 0;
+          counters.botDropped++;
+          continue;
+        }
+      }
+      if (dist <= serverRadius){
+        p.resolved = true; p.age = 0;
+        const pass = Math.random() < passFraction;
+        p.outcome = pass ? 'served' : 'dropped';
+        if (p.type === 'legit'){ pass ? counters.legitServed++ : counters.legitDropped++; }
+        else { pass ? counters.botServed++ : counters.botDropped++; }
+      }
+    }
+
+    particles = particles.filter(p => {
+      if (!p.resolved) return true;
+      p.age = (p.age||0) + dt;
+      return p.age < 0.35;
+    });
+
+    const loadPct = Math.round((totalLoad/CAPACITY)*100);
+    displayLoad = loadPct;
+    const capped = Math.min(loadPct, 250);
+    loadFill.style.width = Math.min(100, (capped/250)*100) + '%';
+    loadValue.textContent = loadPct + '%';
+    let loadColor = 'var(--teal)', statusText = 'Normal', statusClass='ok';
+    if (loadPct >= 70 && loadPct < 100){ loadColor = 'var(--amber)'; statusText='Menurun'; statusClass='warn'; }
+    if (loadPct >= 100){ loadColor = 'var(--red)'; statusText='Gagal merespons'; statusClass='bad'; }
+    loadFill.style.background = loadColor;
+    statusValue.textContent = statusText;
+    statusValue.className = 'v ' + statusClass;
+  }
+
+  setInterval(()=>{
+    servedValue.textContent = counters.legitServed;
+    droppedValue.textContent = counters.legitDropped + counters.botDropped;
+    counters = { legitServed:0, legitDropped:0, botServed:0, botDropped:0 };
+  }, 1000);
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for (let gx=0; gx<W; gx+=32){ ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,H); ctx.stroke(); }
+    for (let gy=0; gy<H; gy+=32){ ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+
+    if (mitigationToggle.checked){
+      ctx.beginPath();
+      ctx.setLineDash([4,5]);
+      ctx.strokeStyle = '#3FA7A0';
+      ctx.globalAlpha = 0.5;
+      ctx.arc(target.x, target.y, 95, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+
+    for (const p of particles){
+      let color;
+      if (!p.resolved){ color = p.type === 'legit' ? '#3FA7A0' : '#E2574C'; }
+      else { color = p.outcome === 'served' ? '#3FA7A0' : '#E2574C'; }
+      ctx.globalAlpha = p.resolved ? Math.max(0, 1 - (p.age/0.35)) : 1;
+      ctx.beginPath();
+      ctx.fillStyle = color;
+      ctx.arc(p.x, p.y, p.type==='legit' ? 3.2 : 3.6, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    const loadPct = displayLoad;
+    let serverColor = '#3FA7A0';
+    if (loadPct >= 70 && loadPct < 100) serverColor = '#D9A441';
+    if (loadPct >= 100) serverColor = '#E2574C';
+    ctx.save();
+    ctx.strokeStyle = serverColor;
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.rect(target.x-18, target.y-24, 36, 48);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(target.x-11, target.y-13); ctx.lineTo(target.x+11, target.y-13);
+    ctx.moveTo(target.x-11, target.y-3); ctx.lineTo(target.x+11, target.y-3);
+    ctx.moveTo(target.x-11, target.y+7); ctx.lineTo(target.x+11, target.y+7);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function loop(now){
+    const dt = Math.min(0.05, (now-lastTime)/1000);
+    lastTime = now;
+    step(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
